@@ -8,7 +8,7 @@ public class ServerCodeRanch {
 	public static void main(String[] args) throws IOException {
 
 		int bytesRead;
-		int current = 0;
+		//int current = 0;
 		String fileToSend = null;
 		boolean finished = false;
 
@@ -28,22 +28,16 @@ public class ServerCodeRanch {
 				InputStream in = clientSocket.getInputStream();
 				DataInputStream clientData = new DataInputStream(in);
 
-				// OutputStream output = new FileOutputStream(fileName);
-
 				int instruction = clientData.readInt();
 				System.out.println(instruction);
 
-				// Para enviar al cliente un file
-				BufferedOutputStream outToClient = null;
-				OutputStream os = clientSocket.getOutputStream();
-				outToClient = new BufferedOutputStream(os);
 
-				if (outToClient != null) {
+				//if (outToClient != null) {
 
 					// Switch statement que dependiendo el int enviado por el cliente, envia un
 					// diferente file
 
-					// AGREGAR EN UNO DE LOS CASES EL: 1.RECIBIR ARCHIVO 2. ESCRIBIRLO EN MEMORIA
+					// AGREGAR EN UNO DE LOS CASES EL: 
 					// 3.MANDAR A ABRIR PYTHON PARA PROCESAR
 
 					switch (instruction) {
@@ -63,8 +57,7 @@ public class ServerCodeRanch {
 							size -= bytesRead;
 						}
 					
-						outputFile.close();
-						
+						//outputFile.close();
 					
 						fileToSend = "/Users/solange/Desktop/lily/Sol.png";
 						break;
@@ -73,24 +66,30 @@ public class ServerCodeRanch {
 						fileToSend = "/Users/solange/Desktop/lily/thanos.png";
 
 					}
-
+					
+					// Para enviar al cliente un file
+					
 					File myFile = new File(fileToSend);
 					byte[] mybytearray = new byte[(int) myFile.length()];
 
 					FileInputStream fis = null;
-
 					fis = new FileInputStream(myFile);
-
 					BufferedInputStream bis = new BufferedInputStream(fis);
+					
+					BufferedOutputStream outToClient = null;
+					OutputStream os = clientSocket.getOutputStream();
+					outToClient = new BufferedOutputStream(os);
 
 					bis.read(mybytearray, 0, mybytearray.length);
 					outToClient.write(mybytearray, 0, mybytearray.length);
 					outToClient.flush();
 					// connectionSocket.close();
+					
+					bis.close();
 
 					System.out.println("File sent");
 
-				}
+				//}
 				// Para mandar al cliente un string, dependiendo del int que haya recibido
 				/*
 				 * try {
@@ -115,15 +114,11 @@ public class ServerCodeRanch {
 				 */
 
 				// Closing the FileOutputStream handle
-				
-				
-				
-				// serverSocket.close();
-				in.close();
-				clientData.close();
-				
-				outToClient.close();
-				clientSocket.close();
+			
+				//in.close(); - NO SE PUEDE CERRAR PORQUE SINO, SE INTERRUMPE LA TRANSMISIÓN DE LA IMAGEN
+				//clientData.close();- NO SE PUEDE CERRAR PORQUE SINO, SE INTERRUMPE LA TRANSMISIÓN DE LA IMAGEN
+				//outToClient.close();
+				//clientSocket.close();
 
 			}
 
