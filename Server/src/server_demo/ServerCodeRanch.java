@@ -42,7 +42,7 @@ public class ServerCodeRanch {
 
 				case 2:
 					String fileName = clientData.readUTF();
-					String filePath = STORAGE + fileName + ".3gp";
+					String filePath = STORAGE + fileName + ".wav";
 					System.out.println("File name: "+fileName);
 					System.out.println("File storage: "+ filePath);
 					OutputStream outputFile = new FileOutputStream(
