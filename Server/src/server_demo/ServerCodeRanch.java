@@ -15,6 +15,16 @@ public class ServerCodeRanch {
 		int bytesRead;
 		String fileToSend = null;
 		boolean finished = false;
+		
+		int userid;
+		int userProfile;
+		String fileName;
+		String filePath;
+		
+		OutputStream outputFile;
+		long size;
+		byte[] buffer;
+		
 
 		try {
 
@@ -36,19 +46,20 @@ public class ServerCodeRanch {
 				System.out.println(instruction);
 
 				switch (instruction) {
-				case 1:
-					fileToSend = "/Users/solange/Desktop/lily/otra.png";
-					break;
-
-				case 2:
-					String fileName = clientData.readUTF();
-					String filePath = STORAGE + fileName + ".wav";
+				case 1:		
+					userid = clientData.readInt();
+					int exerid =  clientData.readInt();
+					fileName = clientData.readUTF();
+					filePath = STORAGE + fileName + ".wav";
+					System.out.println("User id: "+ userid);
+					System.out.println("User profile: "+ instruction);
+					System.out.println("Exercise id: "+ exerid);
 					System.out.println("File name: "+fileName);
 					System.out.println("File storage: "+ filePath);
-					OutputStream outputFile = new FileOutputStream(
+					outputFile = new FileOutputStream(
 							filePath);
-					long size = clientData.readLong();
-					byte[] buffer = new byte[1024];
+					size = clientData.readLong();
+					buffer = new byte[1024];
 					while (size > 0
 							&& (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
 						outputFile.write(buffer, 0, bytesRead);
@@ -58,6 +69,33 @@ public class ServerCodeRanch {
 					command[2]= filePath;
 					command[3]= fileName;
 					
+					
+							
+					fileToSend = "/Users/solange/Desktop/lily/scale_c_minor_midi.png";
+					break;
+
+				case 2:
+					userid = clientData.readInt();
+					fileName = clientData.readUTF();
+					filePath = STORAGE + fileName + ".wav";
+					System.out.println("User id: "+ userid);
+					System.out.println("User profile: "+ instruction);
+					System.out.println("File name: "+fileName);
+					System.out.println("File storage: "+ filePath);
+					outputFile = new FileOutputStream(
+							filePath);
+					size = clientData.readLong();
+					buffer = new byte[1024];
+					while (size > 0
+							&& (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
+						outputFile.write(buffer, 0, bytesRead);
+						size -= bytesRead;
+					}
+
+					command[2]= filePath;
+					command[3]= fileName;
+					
+					/*
 					Process p = Runtime.getRuntime().exec(command);
 					BufferedReader pyFile = new BufferedReader(new InputStreamReader(p.getInputStream()));
 					String pyLine;
@@ -68,6 +106,9 @@ public class ServerCodeRanch {
 					}
 
 					fileToSend = STORAGE + fileName + ".png";
+					*/
+					fileToSend = "/Users/solange/Desktop/lily/Sol.png";
+					
 					break;
 
 				default:
