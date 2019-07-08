@@ -13,7 +13,8 @@ public class ServerCodeRanch {
 
 	//QUE SE GUARDE EN la carpeta correspondiente de Music Catcher y tome de la carpeta que deba ser lo (incluyendo python) el png que corresponda
 	
-	private static String STORAGE = "/Users/solange/Desktop/lily/";
+	private static String STORAGE_RECORDINGS = "/Users/solange/Desktop/MusicCatcher/recordings/";
+	private static String STORAGE_IMAGES = "/Users/solange/Desktop/MusicCatcher/img/scores/";
 	private static String PYTHON_PATH = "/Users/solange/anaconda3/bin/python";
 	private static String PYTHON_FILE = "/Users/solange/PycharmProjects/music_processor";
 	private static String[] command = { PYTHON_PATH, PYTHON_FILE, "", "" };
@@ -93,7 +94,7 @@ public class ServerCodeRanch {
 		}
 
 		fileName = clientData.readUTF();
-		filePath = STORAGE + fileName + ".wav";
+		filePath = STORAGE_RECORDINGS + fileName + ".wav";
 
 		System.out.println("User id: " + userid);
 		System.out.println("User profile: " + profile);
@@ -128,7 +129,7 @@ public class ServerCodeRanch {
 		 * // Iterate through all the lines in the script while ((pyLine =
 		 * pyFile.readLine()) != null) { System.out.println(pyLine); }
 		 * 
-		 * fileToSend = STORAGE + fileName + ".png";
+		 * fileToSend = STORAGE_IMAGES + fileName + ".png";
 		 */
 
 		fileToSend = "/Users/solange/Desktop/lily/Sol.png";
