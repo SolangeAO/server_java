@@ -2,6 +2,12 @@ package server_demo;
 
 import java.io.*;
 import java.net.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 public class ServerCodeRanch {
 
@@ -18,12 +24,18 @@ public class ServerCodeRanch {
 	private static DataInputStream clientData;
 
 	private static int userid;
+	private static int exerid;
 	private static String fileName;
 	private static String filePath;
 
 	private static OutputStream outputFile;
 	private static long size;
 	private static byte[] buffer;
+
+	//private static String url = "jdbc:mysql://127.0.0.1:3306/music_catcher";
+	static String url = "jdbc:mysql://127.0.0.1:3306/music_catcher";
+	private static String user = "admin1";
+	private static String ps = "Sol900907";
 
 	public static void main(String[] args) throws IOException {
 
@@ -47,6 +59,7 @@ public class ServerCodeRanch {
 
 				receiver(instruction);
 				procesor();
+				DBinsert(instruction);
 				sender();
 			}
 
@@ -62,14 +75,13 @@ public class ServerCodeRanch {
 	}
 
 	/**
-	 * Receives the data file from the TCP Client and stores in the proper format and directory. If it is a student, it receives additionally the
-	 * exercise id.
+	 * Receives the data file from the TCP Client and stores in the proper format
+	 * and directory. If it is a student, it receives additionally the exercise id.
+	 * 
 	 * @param profile. int. Profile of the user that sends the information.
 	 * @throws IOException
 	 */
 	private static void receiver(int profile) throws IOException {
-
-		int exerid;
 
 		userid = clientData.readInt();
 
@@ -97,7 +109,9 @@ public class ServerCodeRanch {
 	}
 
 	/**
-	 * Processes the file received and runs the music_processor.py for generating the corresponding image file for the file received.
+	 * Processes the file received and runs the music_processor.py for generating
+	 * the corresponding image file for the file received.
+	 * 
 	 * @throws IOException
 	 */
 	private static void procesor() throws IOException {
@@ -105,23 +119,23 @@ public class ServerCodeRanch {
 		command[2] = filePath;
 		command[3] = fileName;
 
-		Process p = Runtime.getRuntime().exec(command);
-		BufferedReader pyFile = new BufferedReader(new InputStreamReader(p.getInputStream()));
-		String pyLine;
+		/*
+		 * Process p = Runtime.getRuntime().exec(command); BufferedReader pyFile = new
+		 * BufferedReader(new InputStreamReader(p.getInputStream())); String pyLine;
+		 * 
+		 * // Iterate through all the lines in the script while ((pyLine =
+		 * pyFile.readLine()) != null) { System.out.println(pyLine); }
+		 * 
+		 * fileToSend = STORAGE + fileName + ".png";
+		 */
 
-		// Iterate through all the lines in the script
-		while ((pyLine = pyFile.readLine()) != null) {
-			System.out.println(pyLine);
-		}
-
-		fileToSend = STORAGE + fileName + ".png";
-
-		// fileToSend = "/Users/solange/Desktop/lily/Sol.png";
+		fileToSend = "/Users/solange/Desktop/lily/Sol.png";
 
 	}
 
 	/**
 	 * Sends the back to the TCP client the generated file.
+	 * 
 	 * @throws IOException
 	 */
 	private static void sender() throws IOException {
@@ -144,6 +158,96 @@ public class ServerCodeRanch {
 		bis.close();
 
 		System.out.println("File sent: " + fileToSend);
+
+	}
+
+	/**
+	 * Inserts a row into the music_catcher database the compositions table the
+	 * information about the author , .wav file and .png file.
+	 * 
+	 * @throws SQLException
+	 */
+	private static void DBinsert(int profile) throws SQLException {
+
+		String wavFile = fileName + ".wav";
+		String scores = fileName + ".png";
+
+		ResultSet resultSet = null;
+
+		try {
+			Connection myconn = DriverManager.getConnection(url, user, ps);
+
+			String query = "INSERT INTO music_catcher.compositions (author, recording, scores) VALUES (?,?,?)";
+
+			PreparedStatement insertComposition = myconn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+
+			insertComposition.setInt(1, userid);
+			insertComposition.setString(2, wavFile);
+			insertComposition.setString(3, scores);
+
+			insertComposition.executeUpdate();
+
+			System.out.println(
+					"Author, recording and scores have been added to the music_catcher DB. Table compositions ");
+
+			resultSet = insertComposition.getGeneratedKeys();
+
+			if (resultSet.next()) {
+				int lastRow = resultSet.getInt(1);
+				System.out.println("Inserted id: " + lastRow);
+				if (profile == 1) {
+					DBexercise(exerid, lastRow);
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (resultSet != null) {
+				resultSet.close();
+			}
+		}
+	}
+
+	/**
+	 * Inserts a row into the music_catcher database the studentExer_compositions table is the instruction comes from a student.
+	 * @param studentExercise int. Student_exercise id passed to the server if the TCP client was a student.
+	 * @param composition int. Last row inserted on the compositions table which is to be linked to an exercise assigned to a student.
+	 * @throws SQLException
+	 */
+	private static void DBexercise(int studentExercise, int composition) throws SQLException {
+
+		ResultSet resultSet = null;
+
+		try {
+			Connection myconn = DriverManager.getConnection(url, user, ps);
+
+			String query = "INSERT INTO music_catcher.studentExer_compositions (student_exercise, composition) VALUES (?,?)";
+
+			PreparedStatement insertStudentExer = myconn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+
+			insertStudentExer.setInt(1, studentExercise);
+			insertStudentExer.setInt(2, composition);
+
+			insertStudentExer.executeUpdate();
+
+			System.out.println("Composition linked to student_exercise for student. Row inserted in music_catcher DB. "
+					+ "Table studentExer_compositions");
+
+			resultSet = insertStudentExer.getGeneratedKeys();
+
+			if (resultSet.next()) {
+				int lastRow = resultSet.getInt(1);
+				System.out.println("Inserted id: " + lastRow);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (resultSet != null) {
+				resultSet.close();
+			}
+		}
 
 	}
 }
