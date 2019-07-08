@@ -11,6 +11,8 @@ import java.sql.Statement;
 
 public class ServerCodeRanch {
 
+	//QUE SE GUARDE EN la carpeta correspondiente de Music Catcher y tome de la carpeta que deba ser lo (incluyendo python) el png que corresponda
+	
 	private static String STORAGE = "/Users/solange/Desktop/lily/";
 	private static String PYTHON_PATH = "/Users/solange/anaconda3/bin/python";
 	private static String PYTHON_FILE = "/Users/solange/PycharmProjects/music_processor";
@@ -188,7 +190,7 @@ public class ServerCodeRanch {
 			insertComposition.executeUpdate();
 
 			System.out.println(
-					"Author, recording and scores have been added to the music_catcher DB. Table compositions ");
+					"Author, recording and scores have been added to the music_catcher DB. Table: compositions ");
 
 			resultSet = insertComposition.getGeneratedKeys();
 
@@ -197,6 +199,7 @@ public class ServerCodeRanch {
 				System.out.println("Inserted id: " + lastRow);
 				if (profile == 1) {
 					DBexercise(exerid, lastRow);
+					DBnotifier(exerid);
 				}
 			}
 
@@ -231,8 +234,8 @@ public class ServerCodeRanch {
 
 			insertStudentExer.executeUpdate();
 
-			System.out.println("Composition linked to student_exercise for student. Row inserted in music_catcher DB. "
-					+ "Table studentExer_compositions");
+			System.out.println("Composition linked to student_exercise for student in music_catcher DB. "
+					+ "Table: studentExer_compositions");
 
 			resultSet = insertStudentExer.getGeneratedKeys();
 
@@ -249,5 +252,57 @@ public class ServerCodeRanch {
 			}
 		}
 
+	}
+	
+	/**
+	 * Adds a notification for the teacher for the recording that has been upload by the student for the exercise.
+	 * @param exercise int.
+	 * @throws SQLException
+	 */
+	private static void DBnotifier (int exercise) throws SQLException {
+		
+		int teacher = 0;
+		
+		ResultSet resultSet = null;
+		
+		try {
+			Connection myconn = DriverManager.getConnection(url, user, ps);
+			
+			String queryTeacher = " SELECT * FROM music_catcher.student_exercises "
+					+ "INNER JOIN music_catcher.exercise "
+					+ "ON music_catcher.student_exercises.exercise = music_catcher.exercise.id "
+					+ "WHERE music_catcher.student_exercises.id = ? ";
+			
+			PreparedStatement selectTeacher= myconn.prepareStatement(queryTeacher);
+			
+			selectTeacher.setInt(1, exercise);
+				
+			resultSet = selectTeacher.executeQuery();
+			
+			while (resultSet.next()) {
+				teacher = resultSet.getInt("teacher");
+			}
+			
+			String query = "INSERT INTO music_catcher.notifications (activity, recipient, student_exercises) VALUES (?,?,?)";
+			
+			PreparedStatement insertNotifcaition = myconn.prepareStatement(query,Statement.RETURN_GENERATED_KEYS);
+			
+			insertNotifcaition.setInt(1, 4);
+			insertNotifcaition.setInt(2, teacher);
+			insertNotifcaition.setInt(3, exercise);
+			
+			insertNotifcaition.executeUpdate();
+			
+			System.out.println("Activity, recipient and student_exercises have been added to the music_catcher DB."
+					+ "Table: notifications ");	
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (resultSet != null) {
+				resultSet.close();
+			}
+		}
+		
 	}
 }
