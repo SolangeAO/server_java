@@ -11,10 +11,13 @@ import java.sql.Statement;
 
 public class ServerCodeRanch {
 
-	private static String STORAGE = "/Users/solange/Desktop/lily/";
+	//QUE SE GUARDE EN la carpeta correspondiente de Music Catcher y tome de la carpeta que deba ser lo (incluyendo python) el png que corresponda
+	
+	private static String STORAGE_RECORDINGS = "/Users/solange/Desktop/MusicCatcher/recordings/";
+	private static String STORAGE_IMAGES = "/Users/solange/Desktop/MusicCatcher/img/scores/";
 	private static String PYTHON_PATH = "/Users/solange/anaconda3/bin/python";
 	private static String PYTHON_FILE = "/Users/solange/PycharmProjects/music_processor";
-	private static String[] command = { PYTHON_PATH, PYTHON_FILE, "", "" };
+	private static String[] command = { PYTHON_PATH, PYTHON_FILE, STORAGE_RECORDINGS, STORAGE_IMAGES, "", "","" };
 
 	private static Socket clientSocket = null;
 	private static int bytesRead;
@@ -36,6 +39,7 @@ public class ServerCodeRanch {
 	static String url = "jdbc:mysql://127.0.0.1:3306/music_catcher";
 	private static String user = "admin1";
 	private static String ps = "Sol900907";
+	private static int compositionRow;
 
 	public static void main(String[] args) throws IOException {
 
@@ -58,8 +62,8 @@ public class ServerCodeRanch {
 				System.out.println("Received instruction");
 
 				receiver(instruction);
-				procesor();
 				DBinsert(instruction);
+				procesor();
 				sender();
 			}
 
@@ -91,7 +95,7 @@ public class ServerCodeRanch {
 		}
 
 		fileName = clientData.readUTF();
-		filePath = STORAGE + fileName + ".wav";
+		filePath = STORAGE_RECORDINGS + fileName + ".wav";
 
 		System.out.println("User id: " + userid);
 		System.out.println("User profile: " + profile);
@@ -116,20 +120,20 @@ public class ServerCodeRanch {
 	 */
 	private static void procesor() throws IOException {
 
-		command[2] = filePath;
-		command[3] = fileName;
+		command[4] = filePath;
+		command[5] = fileName;
+		command[6] = Integer.toString(compositionRow);
 
-		/*
-		 * Process p = Runtime.getRuntime().exec(command); BufferedReader pyFile = new
-		 * BufferedReader(new InputStreamReader(p.getInputStream())); String pyLine;
-		 * 
-		 * // Iterate through all the lines in the script while ((pyLine =
-		 * pyFile.readLine()) != null) { System.out.println(pyLine); }
-		 * 
-		 * fileToSend = STORAGE + fileName + ".png";
-		 */
-
-		fileToSend = "/Users/solange/Desktop/lily/Sol.png";
+		
+		Process p = Runtime.getRuntime().exec(command); BufferedReader pyFile = new
+		BufferedReader(new InputStreamReader(p.getInputStream())); String pyLine;
+		  
+		 // Iterate through all the lines in the script 
+		 while ((pyLine =pyFile.readLine()) != null) { System.out.println(pyLine); }
+		  
+		 fileToSend = STORAGE_IMAGES + fileName + ".png";
+		 
+		//fileToSend = "/Users/solange/Desktop/lily/Sol.png";
 
 	}
 
@@ -188,15 +192,16 @@ public class ServerCodeRanch {
 			insertComposition.executeUpdate();
 
 			System.out.println(
-					"Author, recording and scores have been added to the music_catcher DB. Table compositions ");
+					"Author, recording and scores have been added to the music_catcher DB. Table: compositions ");
 
 			resultSet = insertComposition.getGeneratedKeys();
 
 			if (resultSet.next()) {
-				int lastRow = resultSet.getInt(1);
-				System.out.println("Inserted id: " + lastRow);
+				compositionRow = resultSet.getInt(1);
+				System.out.println("Inserted id: " + compositionRow);
 				if (profile == 1) {
-					DBexercise(exerid, lastRow);
+					DBexercise(exerid, compositionRow);
+					DBnotifier(exerid);
 				}
 			}
 
@@ -231,8 +236,8 @@ public class ServerCodeRanch {
 
 			insertStudentExer.executeUpdate();
 
-			System.out.println("Composition linked to student_exercise for student. Row inserted in music_catcher DB. "
-					+ "Table studentExer_compositions");
+			System.out.println("Composition linked to student_exercise for student in music_catcher DB. "
+					+ "Table: studentExer_compositions");
 
 			resultSet = insertStudentExer.getGeneratedKeys();
 
@@ -249,5 +254,56 @@ public class ServerCodeRanch {
 			}
 		}
 
+	}
+	
+	/**
+	 * Adds a notification for the teacher for the recording that has been upload by the student for the exercise.
+	 * @param exercise int.
+	 * @throws SQLException
+	 */
+	private static void DBnotifier (int exercise) throws SQLException {
+		
+		int teacher = 0;
+		
+		ResultSet resultSet = null;
+		
+		try {
+			Connection myconn = DriverManager.getConnection(url, user, ps);
+			
+			String queryTeacher = " SELECT * FROM music_catcher.student_exercises "
+					+ "INNER JOIN music_catcher.exercise "
+					+ "ON music_catcher.student_exercises.exercise = music_catcher.exercise.id "
+					+ "WHERE music_catcher.student_exercises.id = ? ";
+			
+			PreparedStatement selectTeacher= myconn.prepareStatement(queryTeacher);
+			
+			selectTeacher.setInt(1, exercise);
+				
+			resultSet = selectTeacher.executeQuery();
+			
+			while (resultSet.next()) {
+				teacher = resultSet.getInt("teacher");
+			}
+			
+			String query = "INSERT INTO music_catcher.notifications (activity, recipient, student_exercises) VALUES (?,?,?)";
+			
+			PreparedStatement insertNotifcaition = myconn.prepareStatement(query,Statement.RETURN_GENERATED_KEYS);
+			
+			insertNotifcaition.setInt(1, 4);
+			insertNotifcaition.setInt(2, teacher);
+			insertNotifcaition.setInt(3, exercise);
+			
+			insertNotifcaition.executeUpdate();
+			
+			System.out.println("Activity, recipient and student_exercises have been added to the music_catcher DB."
+					+ "Table: notifications ");	
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (resultSet != null) {
+				resultSet.close();
+			}
+		}		
 	}
 }
