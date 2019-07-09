@@ -17,7 +17,7 @@ public class ServerCodeRanch {
 	private static String STORAGE_IMAGES = "/Users/solange/Desktop/MusicCatcher/img/scores/";
 	private static String PYTHON_PATH = "/Users/solange/anaconda3/bin/python";
 	private static String PYTHON_FILE = "/Users/solange/PycharmProjects/music_processor";
-	private static String[] command = { PYTHON_PATH, PYTHON_FILE, "", "" };
+	private static String[] command = { PYTHON_PATH, PYTHON_FILE, STORAGE_RECORDINGS, STORAGE_IMAGES, "", "","" };
 
 	private static Socket clientSocket = null;
 	private static int bytesRead;
@@ -39,6 +39,7 @@ public class ServerCodeRanch {
 	static String url = "jdbc:mysql://127.0.0.1:3306/music_catcher";
 	private static String user = "admin1";
 	private static String ps = "Sol900907";
+	private static int compositionRow;
 
 	public static void main(String[] args) throws IOException {
 
@@ -61,8 +62,8 @@ public class ServerCodeRanch {
 				System.out.println("Received instruction");
 
 				receiver(instruction);
-				procesor();
 				DBinsert(instruction);
+				procesor();
 				sender();
 			}
 
@@ -119,20 +120,20 @@ public class ServerCodeRanch {
 	 */
 	private static void procesor() throws IOException {
 
-		command[2] = filePath;
-		command[3] = fileName;
+		command[4] = filePath;
+		command[5] = fileName;
+		command[6] = Integer.toString(compositionRow);
 
-		/*
-		 * Process p = Runtime.getRuntime().exec(command); BufferedReader pyFile = new
-		 * BufferedReader(new InputStreamReader(p.getInputStream())); String pyLine;
-		 * 
-		 * // Iterate through all the lines in the script while ((pyLine =
-		 * pyFile.readLine()) != null) { System.out.println(pyLine); }
-		 * 
-		 * fileToSend = STORAGE_IMAGES + fileName + ".png";
-		 */
-
-		fileToSend = "/Users/solange/Desktop/lily/Sol.png";
+		
+		Process p = Runtime.getRuntime().exec(command); BufferedReader pyFile = new
+		BufferedReader(new InputStreamReader(p.getInputStream())); String pyLine;
+		  
+		 // Iterate through all the lines in the script 
+		 while ((pyLine =pyFile.readLine()) != null) { System.out.println(pyLine); }
+		  
+		 fileToSend = STORAGE_IMAGES + fileName + ".png";
+		 
+		//fileToSend = "/Users/solange/Desktop/lily/Sol.png";
 
 	}
 
@@ -196,10 +197,10 @@ public class ServerCodeRanch {
 			resultSet = insertComposition.getGeneratedKeys();
 
 			if (resultSet.next()) {
-				int lastRow = resultSet.getInt(1);
-				System.out.println("Inserted id: " + lastRow);
+				compositionRow = resultSet.getInt(1);
+				System.out.println("Inserted id: " + compositionRow);
 				if (profile == 1) {
-					DBexercise(exerid, lastRow);
+					DBexercise(exerid, compositionRow);
 					DBnotifier(exerid);
 				}
 			}
@@ -303,7 +304,6 @@ public class ServerCodeRanch {
 			if (resultSet != null) {
 				resultSet.close();
 			}
-		}
-		
+		}		
 	}
 }
