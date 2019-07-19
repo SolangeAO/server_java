@@ -11,14 +11,16 @@ import java.sql.Statement;
 
 public class ServerCodeRanch {
 
-	private static String STORAGE_RECORDINGS = "/Users/solange/Desktop/MusicCatcher/recordings/";
-	private static String STORAGE_IMAGES = "/Users/solange/Desktop/MusicCatcher/img/scores/";
-	private static String PYTHON_PATH = "/Users/solange/anaconda3/bin/python";
-	private static String PYTHON_FILE = "/Users/solange/PycharmProjects/music_processor";
-	private static String[] command = { PYTHON_PATH, PYTHON_FILE, STORAGE_RECORDINGS, STORAGE_IMAGES, "", "", "" };
+	private static final String STORAGE_RECORDINGS = "/Users/solange/Desktop/MusicCatcher/recordings/";
+	private static final String STORAGE_IMAGES = "/Users/solange/Desktop/MusicCatcher/img/scores/";
+	private static final String PYTHON_PATH = "/Users/solange/anaconda3/bin/python";
+	private static final String PYTHON_FILE = "/Users/solange/PycharmProjects/music_processor";
+	private static final String URL = "jdbc:mysql://127.0.0.1:3306/music_catcher";
+	private static final String USER = "admin1";
+	private static final String PS = "Sol900907";
+	private static String[] command = { PYTHON_PATH, PYTHON_FILE, STORAGE_RECORDINGS, STORAGE_IMAGES, "", "", "", URL, USER, PS};
 
 	private static Socket clientSocket = null;
-	private static int bytesRead;
 	private static String fileToSend = null;
 	private static boolean finished = false;
 
@@ -29,15 +31,8 @@ public class ServerCodeRanch {
 	private static String fileName;
 	private static String filePath;
 
-	private static OutputStream outputFile;
-	private static long size;
-	private static byte[] buffer;
 	private static int errorMessage;
 
-	// private static String url = "jdbc:mysql://127.0.0.1:3306/music_catcher";
-	static String url = "jdbc:mysql://127.0.0.1:3306/music_catcher";
-	private static String user = "admin1";
-	private static String ps = "Sol900907";
 	private static int compositionRow;
 
 	public static void main(String[] args) {
@@ -104,13 +99,16 @@ public class ServerCodeRanch {
 		System.out.println("File name: " + fileName);
 		System.out.println("File storage: " + filePath);
 
-		outputFile = new FileOutputStream(filePath);
-		size = clientData.readLong();
-		buffer = new byte[1024];
+		
+		OutputStream outputFile = new FileOutputStream(filePath);
+		long size = clientData.readLong();
+		byte[] buffer = new byte[1024];
+		int bytesRead;
 		while (size > 0 && (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
 			outputFile.write(buffer, 0, bytesRead);
 			size -= bytesRead;
 		}
+		
 
 	}
 
@@ -203,7 +201,7 @@ public class ServerCodeRanch {
 		ResultSet resultSet = null;
 
 		try {
-			Connection myconn = DriverManager.getConnection(url, user, ps);
+			Connection myconn = DriverManager.getConnection(URL, USER, PS);
 
 			String query = "INSERT INTO music_catcher.compositions (author, recording, scores) VALUES (?,?,?)";
 
@@ -253,7 +251,7 @@ public class ServerCodeRanch {
 		ResultSet resultSet = null;
 
 		try {
-			Connection myconn = DriverManager.getConnection(url, user, ps);
+			Connection myconn = DriverManager.getConnection(URL, USER, PS);
 
 			String query = "INSERT INTO music_catcher.studentExer_compositions (student_exercise, composition) VALUES (?,?)";
 
@@ -298,7 +296,7 @@ public class ServerCodeRanch {
 		ResultSet resultSet = null;
 
 		try {
-			Connection myconn = DriverManager.getConnection(url, user, ps);
+			Connection myconn = DriverManager.getConnection(URL, USER, PS);
 
 			String queryTeacher = " SELECT * FROM music_catcher.student_exercises "
 					+ "INNER JOIN music_catcher.exercise "
